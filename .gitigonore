@@ -1,0 +1,7 @@
+*.o
+*.d
+_*
+kernel
+fs.img
+mkfs
+.DS_Store
