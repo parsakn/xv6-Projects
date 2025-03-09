@@ -13,6 +13,13 @@
 
 #define MAXARGS 10
 
+char *keywords[] = {
+    "int", "char", "if", "for", "while", "return", "void", "and"
+};
+
+int numKeywords = 8;
+
+
 struct cmd {
   int type;
 };
@@ -141,6 +148,91 @@ getcmd(char *buf, int nbuf)
   return 0;
 }
 
+
+char* strstr(const char* haystack, const char* needle) {
+    if (!haystack || !needle) return 0;
+
+    for (int i = 0; haystack[i]; i++) {
+        int j = 0;
+        while (needle[j] && haystack[i + j] == needle[j]) {
+            j++;
+        }
+        if (!needle[j]) {
+            return (char*)(haystack + i);
+        }
+    }
+    return 0;
+}
+
+int
+is_keyword(char *word) {
+
+    for (int i = 0; i < numKeywords; i++) {
+        if (strstr(word, keywords[i]) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void highlightKeywordsInWord(char *word) {
+    for (int i = 0; i < numKeywords; i++) {
+        char *keyword = keywords[i];
+        int keywordLen = strlen(keyword);
+        char *found = strstr(word, keyword); // Find the keyword in the word
+
+        if (found) {
+            // Print the part before the keyword
+            for (char *p = word; p < found; p++) {
+                printf(1, "%c", *p);
+            }
+
+            // Print the keyword in blue
+            printf(1, "\033[34m");
+            for (int j = 0; j < keywordLen; j++) {
+                printf(1, "%c", found[j]);
+            }
+            printf(1, "\033[0m");
+
+            // Print the rest of the word
+            for (char *p = found + keywordLen; *p != '\0'; p++) {
+                printf(1, "%c", *p);
+            }
+            return;
+        }
+    }
+    printf(1, "%s", word); // Print the word as is if no keyword is found
+}
+
+void processLine(char *line) {
+    char buffer[100]; // Temporary buffer for words
+    int bufferIndex = 0;
+    int inComment = 0; // Flag to track if we're inside a # comment
+
+    for (int i = 1; line[i] != '\0'; i++) { // Start from index 1 to skip the '!'
+        if (line[i] == '#') {
+            inComment = !inComment; // Toggle comment flag
+            continue; // Skip the # character
+        }
+
+        if (inComment) {
+            continue; // Skip characters inside comments
+        }
+
+        if (line[i] == ' ' || line[i] == '\n' || line[i] == '\t') {
+            buffer[bufferIndex] = '\0'; // End the current word
+            bufferIndex = 0;
+
+            highlightKeywordsInWord(buffer); // Highlight keywords in the word
+            printf(1, "%c", line[i]); // Print the space, newline, or tab
+        } else {
+            buffer[bufferIndex++] = line[i]; // Build the current word
+        }
+    }
+    printf(1, "\n"); // End the line
+}
+
+
 int
 main(void)
 {
@@ -164,9 +256,17 @@ main(void)
         printf(2, "cannot cd %s\n", buf+3);
       continue;
     }
+    // Check if the command starts with '!'
+    if (buf[0] == '!' && is_keyword(buf)) {
+            processLine(buf);
+            continue; // Skip executing the command
+      }
+
+
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait();
+    
   }
   exit();
 }
@@ -491,3 +591,4 @@ nulterminate(struct cmd *cmd)
   }
   return cmd;
 }
+
