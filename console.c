@@ -369,33 +369,6 @@ revstr(char* src, uint len)
   }
 }
 
-static void
-revline()
-{
-  char cmd[INPUT_BUF];
-  memmove(cmd, input.buf + input.w, input.e - input.w);
-  cmd[input.e - input.w] = '\0';
-  revstr(cmd, input.e - input.w);
-  consclear();
-  consputs(cmd);
-}
-
-static void
-remnums()
-{
-  char cmd[INPUT_BUF];
-  int j = 0;
-  for(int i = 0; i < input.e - input.w; ++i){
-    int idx = (input.w + i) % INPUT_BUF;
-    if(input.buf[idx] >= '0' && input.buf[idx] <= '9'){
-      continue;
-    }
-    cmd[j++] = input.buf[idx];
-  }
-  cmd[j] = '\0';
-  consclear();
-  consputs(cmd);
-}
 
 static void
 hist_up()
@@ -432,13 +405,6 @@ hist_down()
 
 
 int charsInBuffer() {
-    // if (input.w >= input.r) {
-    //     // Buffer is not wrapped
-    //     return input.w - input.r;
-    // } else {
-    //     // Buffer is wrapped
-    //     return INPUT_BUF - input.r + input.w;
-    // }
     int out = 0;
     for(int i = 0; i < INPUT_BUF ; i++){
       if(input.buf[i] != '\0'){
@@ -509,7 +475,7 @@ consoleintr(int (*getc)(void))
         hist.is_suggestion_used = 0;
       }
       break;
-    case C('R'): // Reverse line.
+    case C('R'): 
       last5cmd();
       break;
     case C('C'):
